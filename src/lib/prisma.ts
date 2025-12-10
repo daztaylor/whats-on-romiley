@@ -2,34 +2,36 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 
-// Don't create client at module load - only when getPrisma() is called
-let cachedPrisma: PrismaClient | null = null
+let prismaInstance: PrismaClient | null = null
 
-export function getPrisma(): PrismaClient {
-    if (cachedPrisma) return cachedPrisma
-
+function createPrismaClient(): PrismaClient {
+    // Check if we're in a build/prerender context
     const url = process.env.DATABASE_URL
-    if (!url) {
-        throw new Error(`DATABASE_URL is not set. Got: ${url}`)
+
+    // During build, DATABASE_URL might not be available - return a dummy client
+    if (!url || url === 'undefined') {
+        console.warn('DATABASE_URL not available, creating placeholder client')
+        // Return a basic client that will fail gracefully
+        return new PrismaClient()
     }
+
+    console.log(`Creating Prisma client with URL starting with: ${url.substring(0, 20)}...`)
 
     if (url.startsWith('libsql://')) {
         const libsql = createClient({ url })
         const adapter = new PrismaLibSql(libsql as any)
-        cachedPrisma = new PrismaClient({ adapter: adapter as any })
-    } else {
-        cachedPrisma = new PrismaClient()
+        return new PrismaClient({ adapter: adapter as any })
     }
 
-    return cachedPrisma
+    return new PrismaClient()
 }
 
-// For backwards compatibility, export as prisma
-// But this will call getPrisma() on first access
 export const prisma = new Proxy({} as PrismaClient, {
     get(_, prop) {
-        const client = getPrisma()
-        const value = (client as any)[prop]
-        return typeof value === 'function' ? value.bind(client) : value
+        if (!prismaInstance) {
+            prismaInstance = createPrismaClient()
+        }
+        const value = (prismaInstance as any)[prop]
+        return typeof value === 'function' ? value.bind(prismaInstance) : value
     }
 })
