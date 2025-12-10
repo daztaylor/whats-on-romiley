@@ -1,10 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import EventCard from '@/coimport Link from 'next / link';
-import { prisma } from '@/lib/prisma';
+import EventCard from '@/components/EventCard';
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+export default async function Home() {
   const events = await prisma.event.findMany({
     where: {
       date: {
@@ -21,34 +20,16 @@ export default async function HomePage() {
   });
 
   return (
-    <div>
-      <section className="hero">
-        <h1 style={{ fontSize: '3rem', marginBottom: '1rem', fontWeight: 800 }}>
-          What's On in Romiley
-        </h1>
-        <p style={{ fontSize: '1.2rem', color: '#ccc', marginBottom: '2rem' }}>
-          Discover the best local events in Romiley, Stockport. From pub quizzes to live music.
-        </p>
+    <div className="container p-2">
+      <header className="mb-2">
+        <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>What's On in Romiley</h1>
+        <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Discover local events happening near you</p>
+      </header>
 
-        <form action="/events" className="search-bar">
-          <input
-            type="text"
-            name="q"
-            placeholder="Search events (e.g., 'quiz', 'jazz')..."
-            className="input"
-          />
-          <button type="submit" className="btn">Search</button>
-        </form>
-      </section>
-
-      <section className="container p-2">
-        <div className="flex-between mb-2">
-          <h2 style={{ fontSize: '2rem' }}>Upcoming Events</h2>
-          <a href="/events" style={{ color: 'var(--secondary)' }}>View All &rarr;</a>
-        </div>
-
+      <section className="mb-2">
+        <h2 className="mb-1">Upcoming Events</h2>
         {events.length === 0 ? (
-          <p className="text-center" style={{ color: '#666' }}>No upcoming events found.</p>
+          <p>No upcoming events at the moment. Check back soon!</p>
         ) : (
           <div className="grid grid-cols-3">
             {events.map((event) => (
@@ -58,20 +39,11 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="container p-2" style={{ borderTop: '1px solid var(--card-border)' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-          For Venue Owners
-        </h2>
-        <div className="card text-center" style={{ maxWidth: '600px', margin: '0 auto', background: 'var(--card-bg)' }}>
-          <h3 style={{ marginBottom: '1rem' }}>List Your Events for Free</h3>
-          <p style={{ marginBottom: '1.5rem', color: '#ccc' }}>
-            Reach thousands of locals. Automate your social media. Update in seconds.
-          </p>
-          <div>
-            <a href="/admin" className="btn btn-secondary">Get Started</a>
-          </div>
-        </div>
-      </section>
+      <div className="text-center mt-2">
+        <a href="/events" className="btn">
+          View All Events
+        </a>
+      </div>
     </div>
   );
 }
