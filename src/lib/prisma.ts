@@ -2,31 +2,37 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 
-declare global {
-    var prisma: PrismaClient | undefined
-}
+let prismaInstance: PrismaClient | null = null
 
-function getPrismaClient() {
+function getPrismaClient(): PrismaClient {
+    if (prismaInstance) {
+        return prismaInstance
+    }
+
     const databaseUrl = process.env.DATABASE_URL
 
     if (!databaseUrl) {
-        throw new Error('DATABASE_URL is not defined')
+        throw new Error('DATABASE_URL environment variable is not set')
     }
 
     if (databaseUrl.startsWith('libsql://')) {
-        // Production: Use Turso with adapter
+        // Turso/Production
         const libsql = createClient({ url: databaseUrl })
         const adapter = new PrismaLibSql(libsql as any)
-        return new PrismaClient({ adapter: adapter as any })
+        prismaInstance = new PrismaClient({ adapter: adapter as any })
     } else {
-        // Development: Use local SQLite
-        return new PrismaClient()
+        // Local SQLite
+        prismaInstance = new PrismaClient()
     }
+
+    return prismaInstance
 }
 
-// In production, always create a new client to ensure env vars are read
-// In development, reuse the client to avoid connection issues
-export const prisma =
-    process.env.NODE_ENV === 'production'
-        ? getPrismaClient()
-        : (global.prisma || (global.prisma = getPrismaClient()))
+// Export a proxy that creates the client on first property access
+export const prisma = new Proxy({} as PrismaClient, {
+    get: (target, prop) => {
+        const client = getPrismaClient()
+        const value = (client as any)[prop]
+        return typeof value === 'function' ? value.bind(client) : value
+    }
+})
