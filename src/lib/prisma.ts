@@ -5,30 +5,33 @@ import { createClient } from '@libsql/client'
 let prismaInstance: PrismaClient | null = null
 
 function createPrismaClient(): PrismaClient {
-    // Check if we're in a build/prerender context
     const url = process.env.DATABASE_URL
 
-    // During build, DATABASE_URL might not be available - return a dummy client
-    if (!url || url === 'undefined') {
-        console.warn('DATABASE_URL not available, creating placeholder client')
-        // Return a basic client that will fail gracefully
-        return new PrismaClient()
+    console.log('[Prisma] Creating client...')
+    console.log('[Prisma] DATABASE_URL exists:', !!url)
+    console.log('[Prisma] DATABASE_URL type:', typeof url)
+    console.log('[Prisma] DATABASE_URL value:', url ? `${url.substring(0, 30)}...` : 'UNDEFINED')
+    console.log('[Prisma] All env keys:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
+
+    if (!url || url === 'undefined' || url === '') {
+        throw new Error(`DATABASE_URL is not available. Value: "${url}", Type: ${typeof url}`)
     }
 
-    console.log(`Creating Prisma client with URL starting with: ${url.substring(0, 20)}...`)
-
     if (url.startsWith('libsql://')) {
+        console.log('[Prisma] Using Turso adapter')
         const libsql = createClient({ url })
         const adapter = new PrismaLibSql(libsql as any)
         return new PrismaClient({ adapter: adapter as any })
     }
 
+    console.log('[Prisma] Using standard SQLite client')
     return new PrismaClient()
 }
 
 export const prisma = new Proxy({} as PrismaClient, {
     get(_, prop) {
         if (!prismaInstance) {
+            console.log(`[Prisma] First access to property: ${String(prop)}`)
             prismaInstance = createPrismaClient()
         }
         const value = (prismaInstance as any)[prop]
