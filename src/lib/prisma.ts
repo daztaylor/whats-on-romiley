@@ -13,8 +13,8 @@ function createPrismaClient() {
     if (databaseUrl.startsWith('libsql://')) {
         // Production: Use Turso with adapter
         const libsql = createClient({ url: databaseUrl })
-        const adapter = new PrismaLibSql(libsql)
-        return new PrismaClient({ adapter })
+        const adapter = new PrismaLibSql(libsql as any)
+        return new PrismaClient({ adapter: adapter as any })
     } else {
         // Development: Use local SQLite
         return new PrismaClient()
