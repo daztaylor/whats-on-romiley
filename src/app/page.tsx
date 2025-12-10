@@ -1,9 +1,10 @@
 import { prisma } from '@/lib/prisma';
-import EventCard from '@/components/EventCard';
+import EventCard from '@/coimport Link from 'next / link';
+import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'
 
-export default async function Home() {
+export default async function HomePage() {
   const events = await prisma.event.findMany({
     where: {
       date: {

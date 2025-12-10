@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import EventCard from '@/components/EventCard';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
