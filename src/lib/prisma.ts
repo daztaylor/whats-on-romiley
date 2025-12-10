@@ -7,31 +7,35 @@ let prismaInstance: PrismaClient | null = null
 function createPrismaClient(): PrismaClient {
     const url = process.env.DATABASE_URL
 
-    console.log('[Prisma] Creating client...')
-    console.log('[Prisma] DATABASE_URL exists:', !!url)
-    console.log('[Prisma] DATABASE_URL type:', typeof url)
-    console.log('[Prisma] DATABASE_URL value:', url ? `${url.substring(0, 30)}...` : 'UNDEFINED')
-    console.log('[Prisma] All env keys:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
-
     if (!url || url === 'undefined' || url === '') {
-        throw new Error(`DATABASE_URL is not available. Value: "${url}", Type: ${typeof url}`)
+        throw new Error(`DATABASE_URL is not available. Value: "${url}"`)
     }
 
     if (url.startsWith('libsql://')) {
-        console.log('[Prisma] Using Turso adapter')
-        const libsql = createClient({ url })
+        // Extract auth token from URL
+        const urlObj = new URL(url)
+        const authToken = urlObj.searchParams.get('authToken')
+        const baseUrl = url.split('?')[0]
+
+        console.log('[Prisma] Creating Turso client with URL:', baseUrl.substring(0, 30) + '...')
+        console.log('[Prisma] Auth token exists:', !!authToken)
+
+        // Pass URL and authToken separately to avoid env var issues
+        const libsql = createClient({
+            url: baseUrl,
+            authToken: authToken || undefined
+        })
+
         const adapter = new PrismaLibSql(libsql as any)
         return new PrismaClient({ adapter: adapter as any })
     }
 
-    console.log('[Prisma] Using standard SQLite client')
     return new PrismaClient()
 }
 
 export const prisma = new Proxy({} as PrismaClient, {
     get(_, prop) {
         if (!prismaInstance) {
-            console.log(`[Prisma] First access to property: ${String(prop)}`)
             prismaInstance = createPrismaClient()
         }
         const value = (prismaInstance as any)[prop]
