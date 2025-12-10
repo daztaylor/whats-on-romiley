@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id          String   @id @default(uuid())
+  name        String
+  location    String
+  type        String
+  ownerEmail  String   @unique
+  password    String
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  date        DateTime
+  category    String
+  venueId     String
+  recurrence  String?  // "none", "weekly", "monthly"
+  groupId     String?  // to link recurring events
+  bookingUrl  String?
+  venue       Venue    @relation(fields: [venueId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Ad {
+  id          String   @id @default(uuid())
+  content     String
+  targetUrl   String?
+  imageUrl    String?
+  location    String   // e.g. "homepage", "sidebar"
+  expiryDate  DateTime
+  createdAt   DateTime @default(now())
+}
