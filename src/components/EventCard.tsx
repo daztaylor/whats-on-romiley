@@ -15,61 +15,94 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-    const dateStr = new Date(event.date).toLocaleDateString(undefined, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'short'
-    });
-
-    const timeStr = new Date(event.date).toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    const dateObj = new Date(event.date);
+    const dayStr = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    const dateNum = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
     return (
-        <Link href={`/events/${event.id}`} className="card" style={{ textDecoration: 'none' }}>
-            <div style={{ marginBottom: '1rem' }}>
+        <Link href={`/events/${event.id}`} className="card" style={{ textDecoration: 'none', position: 'relative', overflow: 'hidden' }}>
+            {/* Top Bar: Date & Category */}
+            <div className="flex-between mb-1">
+                <div style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                }}>
+                    <span style={{ color: 'var(--primary)' }}>{dayStr}</span>
+                    <span>{dateNum}</span>
+                    <span style={{ opacity: 0.5 }}>|</span>
+                    <span>{timeStr}</span>
+                </div>
+
                 <span style={{
                     fontSize: '0.7rem',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: 'var(--primary)',
-                    fontWeight: 700
+                    letterSpacing: '0.05em',
+                    color: 'var(--muted)',
+                    fontWeight: 600
                 }}>
                     {event.category}
                 </span>
             </div>
 
+            {/* Main Content: Title */}
             <h3 style={{
-                fontSize: '1.5rem',
-                marginBottom: '0.75rem',
+                fontSize: '1.4rem',
+                marginBottom: '0.5rem',
                 fontWeight: 800,
-                lineHeight: 1.2
+                lineHeight: 1.2,
+                color: '#fff'
             }}>
                 {event.title}
             </h3>
 
+            {/* Location / Venue - Prominent */}
+            <div style={{
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: 'var(--primary)',
+                fontSize: '0.9rem',
+                fontWeight: 600
+            }}>
+                <span>📍</span>
+                <span>{event.venue.name}</span>
+            </div>
+
+            {/* Description */}
             <p style={{
                 color: 'var(--muted)',
-                fontSize: '0.95rem',
+                fontSize: '0.9rem',
+                lineHeight: 1.5,
                 flex: 1,
-                marginBottom: '2rem',
-                lineHeight: 1.6
+                marginBottom: '1rem',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
             }}>
-                {event.description.substring(0, 120)}...
+                {event.description}
             </p>
 
-            <div className="flex-between" style={{
+            {/* Bottom Action */}
+            <div style={{
                 marginTop: 'auto',
-                paddingTop: '1rem',
+                paddingTop: '0.75rem',
                 borderTop: '1px solid rgba(255,255,255,0.05)',
+                textAlign: 'right',
                 fontSize: '0.85rem',
-                color: '#fff'
+                color: 'var(--secondary)',
+                fontWeight: 600
             }}>
-                <div style={{ fontWeight: 600 }}>By {event.venue.name}</div>
-                <div style={{ color: 'var(--muted)' }}>
-                    {dateStr} • {timeStr}
-                </div>
+                View Details →
             </div>
         </Link>
     );
