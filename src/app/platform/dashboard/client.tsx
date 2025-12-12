@@ -482,7 +482,7 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
                             </div>
 
                             <div style={{ marginTop: '2rem', fontSize: '0.8rem', opacity: 0.8, letterSpacing: '2px', textAlign: 'center', textShadow: '0 1px 2px black' }}>
-                                DISCOVER MORE AT ROMILEY-WHATSON.COM
+                                DISCOVER MORE ONLINE
                             </div>
                         </div>
                     </div>
