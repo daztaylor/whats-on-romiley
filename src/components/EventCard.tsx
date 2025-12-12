@@ -55,6 +55,7 @@ export default function EventCard({ event }: EventCardProps) {
             {/* Main Content: Title */}
             <h3 style={{
                 fontSize: '1.4rem',
+                marginTop: '1rem',
                 marginBottom: '0.5rem',
                 fontWeight: 800,
                 lineHeight: 1.2,
