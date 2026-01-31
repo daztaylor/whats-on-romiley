@@ -4,10 +4,11 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import bcrypt from 'bcrypt'
 
-// Platform admin credentials (in production, store hashed password in env)
+// Platform admin credentials from environment variables
 const PLATFORM_ADMIN = {
-    email: process.env.PLATFORM_ADMIN_EMAIL || 'daz@daztaylor.co.uk',
-    passwordHash: process.env.PLATFORM_ADMIN_PASSWORD_HASH || '$2b$10$placeholder' // Will be set in .env
+    email: process.env.PLATFORM_ADMIN_EMAIL,
+    // Hash for password
+    passwordHash: process.env.PLATFORM_ADMIN_PASSWORD_HASH
 }
 
 export async function platformLogin(prevState: any, formData: FormData) {
@@ -18,8 +19,24 @@ export async function platformLogin(prevState: any, formData: FormData) {
         return { error: 'Please enter both email and password' }
     }
 
-    // Check if credentials match platform admin
-    if (email === PLATFORM_ADMIN.email && await bcrypt.compare(password, PLATFORM_ADMIN.passwordHash)) {
+    if (!PLATFORM_ADMIN.email || !PLATFORM_ADMIN.passwordHash) {
+        console.error('Platform admin credentials not configured in environment')
+        return { error: 'Server configuration error' }
+    }
+
+    // Email check
+    if (email !== PLATFORM_ADMIN.email) {
+        // Return generic error in production, specific in dev for debugging if needed
+        return { error: 'Invalid credentials' }
+    }
+
+    // Password check
+    const isMatch = await bcrypt.compare(password, PLATFORM_ADMIN.passwordHash);
+    if (!isMatch) {
+        return { error: 'Invalid credentials' }
+    }
+
+    if (email === PLATFORM_ADMIN.email && isMatch) {
         const cookieStore = await cookies()
         const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
@@ -31,8 +48,6 @@ export async function platformLogin(prevState: any, formData: FormData) {
         })
 
         redirect('/platform/dashboard')
-    } else {
-        return { error: 'Invalid credentials' }
     }
 }
 

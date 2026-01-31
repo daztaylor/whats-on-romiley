@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
 import { updateEvent } from '@/app/actions/events'
 
 interface Props {
@@ -14,15 +14,24 @@ interface Props {
 }
 
 export default function EditEventForm({ event }: Props) {
-    const updateEventWithId = updateEvent.bind(null, event.id);
-    const [state, formAction, isPending] = useActionState(updateEventWithId, null)
+    const [isPending, startTransition] = useTransition()
+    const [state, setState] = useState<any>(null)
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await updateEvent(event.id, null, formData)
+            if (result?.error) {
+                setState(result)
+            }
+        })
+    }
 
     // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
     const defaultDate = new Date(event.date).toISOString().slice(0, 16);
 
     return (
         <div className="card">
-            <form action={formAction} className="flex flex-col" style={{ gap: '1.5rem' }}>
+            <form action={handleSubmit} className="flex flex-col" style={{ gap: '1.5rem' }}>
                 <div>
                     <label style={{ display: 'block', marginBottom: '0.5rem' }}>Event Title</label>
                     <input name="title" defaultValue={event.title} type="text" required className="input" style={{ width: '100%' }} />

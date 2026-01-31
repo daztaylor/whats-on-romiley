@@ -1,17 +1,27 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
 import { platformLogin } from '@/app/actions/platform-auth'
 
 export default function PlatformLoginPage() {
-    const [state, formAction, isPending] = useActionState(platformLogin, null)
+    const [isPending, startTransition] = useTransition()
+    const [state, setState] = useState<any>(null)
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await platformLogin(null, formData)
+            if (result?.error) {
+                setState(result)
+            }
+        })
+    }
 
     return (
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem', border: '1px solid var(--secondary)' }}>
                 <h1 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Super Admin</h1>
 
-                <form action={formAction} className="flex flex-col" style={{ gap: '1rem' }}>
+                <form action={handleSubmit} className="flex flex-col" style={{ gap: '1rem' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
                         <input name="email" type="email" required className="input" style={{ width: '100%' }} />

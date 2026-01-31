@@ -1,17 +1,25 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
 import { changePassword } from '@/app/actions/change-password'
 
 export default function ChangePasswordPage() {
-    const [state, formAction, isPending] = useActionState(changePassword, null)
+    const [isPending, startTransition] = useTransition()
+    const [state, setState] = useState<any>(null)
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await changePassword(null, formData)
+            setState(result)
+        })
+    }
 
     return (
         <div className="container p-2">
             <h1 className="mb-2">Change Password</h1>
 
             <div className="card" style={{ maxWidth: '500px' }}>
-                <form action={formAction}>
+                <form action={handleSubmit}>
                     {state?.error && (
                         <div style={{
                             padding: '1rem',

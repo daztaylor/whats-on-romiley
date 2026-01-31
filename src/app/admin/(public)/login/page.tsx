@@ -1,17 +1,27 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
 import { login } from '@/app/actions/auth'
 
 export default function LoginPage() {
-    const [state, formAction, isPending] = useActionState(login, null)
+    const [isPending, startTransition] = useTransition()
+    const [state, setState] = useState<any>(null)
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await login(null, formData)
+            if (result?.error) {
+                setState(result)
+            }
+        })
+    }
 
     return (
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem' }}>
                 <h1 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Venue Login</h1>
 
-                <form action={formAction} className="flex flex-col" style={{ gap: '1rem' }}>
+                <form action={handleSubmit} className="flex flex-col" style={{ gap: '1rem' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
                         <input name="email" type="email" required className="input" style={{ width: '100%' }} />

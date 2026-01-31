@@ -1,17 +1,27 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
 import { createEvent } from '@/app/actions/events'
 
 export default function NewEventPage() {
-    const [state, formAction, isPending] = useActionState(createEvent, null)
+    const [isPending, startTransition] = useTransition()
+    const [state, setState] = useState<any>(null)
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await createEvent(null, formData)
+            if (result?.error) {
+                setState(result)
+            }
+        })
+    }
 
     return (
         <div style={{ maxWidth: '600px' }}>
             <h1 className="mb-2">Create New Event</h1>
 
             <div className="card">
-                <form action={formAction} className="flex flex-col" style={{ gap: '1.5rem' }}>
+                <form action={handleSubmit} className="flex flex-col" style={{ gap: '1.5rem' }}>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.5rem' }}>Event Title</label>
                         <input name="title" type="text" required className="input" style={{ width: '100%' }} placeholder="e.g. Weekly Pub Quiz" />
