@@ -1,10 +1,10 @@
 'use client';
 
 import { useActionState } from 'react';
-import { authenticate } from '@/app/actions/auth';
+import { platformLogin } from '@/app/actions/platform-auth';
 
 export default function PlatformLoginPage() {
-    const [errorMessage, dispatch] = useActionState(authenticate, undefined);
+    const [state, dispatch] = useActionState(platformLogin, undefined);
 
     return (
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
@@ -12,19 +12,18 @@ export default function PlatformLoginPage() {
                 <h1 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Super Admin</h1>
 
                 <form action={dispatch} className="flex flex-col" style={{ gap: '1rem' }}>
-                    {/* Hidden flag to tell auth.ts this is an admin login */}
-                    <input type="hidden" name="is_admin" value="true" />
-
-                    {/* Dummy email for credentials provider requirement, or handled in authorize */}
-                    <input type="hidden" name="email" value="admin@platform.com" />
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
+                        <input name="email" type="email" required className="input" style={{ width: '100%' }} />
+                    </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Master Password</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Password</label>
                         <input name="password" type="password" required className="input" style={{ width: '100%' }} />
                     </div>
 
-                    {errorMessage && (
-                        <p style={{ color: 'var(--secondary)', fontSize: '0.9rem' }}>{errorMessage}</p>
+                    {state?.error && (
+                        <p style={{ color: 'var(--secondary)', fontSize: '0.9rem' }}>{state.error}</p>
                     )}
 
                     <button type="submit" className="btn mt-2" style={{ width: '100%', backgroundColor: 'var(--secondary)' }}>
