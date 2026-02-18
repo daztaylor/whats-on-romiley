@@ -47,3 +47,14 @@ model Ad {
   expiryDate  DateTime
   createdAt   DateTime @default(now())
 }
+
+model Media {
+  id          String   @id @default(uuid())
+  url         String   // Vercel Blob public URL
+  filename    String
+  mimeType    String
+  size        Int      // bytes
+  type        String   // e.g. "background", "venue", "event", "general"
+  label       String?  // optional human-readable label
+  createdAt   DateTime @default(now())
+}

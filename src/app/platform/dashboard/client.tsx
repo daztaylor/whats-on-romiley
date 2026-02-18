@@ -5,7 +5,8 @@ import * as htmlToImage from 'html-to-image';
 import Link from 'next/link';
 import { platformLogout } from '@/app/actions/platform-auth';
 import { importEventsFromCsv } from '@/app/actions/import';
-import { deleteEvents } from '@/app/actions/events'; // Changed import
+import { deleteEvents } from '@/app/actions/events';
+import ImageUploader from '@/components/ImageUploader';
 
 interface EnrichedEvent {
     id: string;
@@ -19,8 +20,17 @@ interface EnrichedEvent {
     };
 }
 
+interface SavedMedia {
+    id: string;
+    url: string;
+    filename: string;
+    label: string | null;
+    type: string;
+}
+
 interface PlatformDashboardClientProps {
-    initialEvents: EnrichedEvent[]; // Changed prop name and type
+    events: EnrichedEvent[];
+    savedBackgrounds: SavedMedia[];
 }
 
 const BACKGROUNDS = [
@@ -36,10 +46,10 @@ const ASPECT_RATIOS = [
     { id: 'horizontal', name: 'Horizontal (1.91:1)', ratio: '1.91/1', width: 1200, height: 630 },
 ];
 
-export default function PlatformDashboardClient({ events }: { events: EnrichedEvent[] }) {
+export default function PlatformDashboardClient({ events, savedBackgrounds }: { events: EnrichedEvent[], savedBackgrounds: SavedMedia[] }) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [selectedBg, setSelectedBg] = useState(BACKGROUNDS[0]);
-    const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
+    const [dbBackgrounds, setDbBackgrounds] = useState<SavedMedia[]>(savedBackgrounds);
     const [selectedAspectRatio, setSelectedAspectRatio] = useState(ASPECT_RATIOS[0]);
     const [titleText, setTitleText] = useState("What's On in Romiley");
     const [bgColor, setBgColor] = useState("#000000"); // Default black
@@ -65,17 +75,10 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
         });
     };
 
-    const handleCustomImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const dataUrl = event.target?.result as string;
-                setCustomBgUrl(dataUrl);
-                setSelectedBg({ id: 'custom', name: 'Custom Upload', src: dataUrl });
-            };
-            reader.readAsDataURL(file);
-        }
+    const handleBgUploaded = (media: { id: string; url: string; filename: string; label: string | null; type: string }) => {
+        const newBg: SavedMedia = media;
+        setDbBackgrounds(prev => [newBg, ...prev]);
+        setSelectedBg({ id: `db-${newBg.id}`, name: newBg.label || newBg.filename, src: newBg.url });
     };
 
     const toggleEvent = (id: string) => {
@@ -157,13 +160,12 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
             // Calculate precise pixel ratio to match target width
             const currentWidth = exportRef.current.offsetWidth;
             const targetWidth = selectedAspectRatio.width;
-            const targetHeight = selectedAspectRatio.height;
             const scale = targetWidth / currentWidth;
 
             console.log(`Generating image. Current width: ${currentWidth}, Target: ${targetWidth}, Scale: ${scale}`);
 
-            // Use toBlob instead of toPng for better handling of large image data
-            const blob = await htmlToImage.toBlob(exportRef.current, {
+            // Generate as data URL (base64) — avoids blob URL new-tab issue
+            const dataUrl = await htmlToImage.toPng(exportRef.current, {
                 quality: 1.0,
                 pixelRatio: Math.max(scale, 2),
                 cacheBust: true,
@@ -175,24 +177,32 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
                 }
             });
 
-            if (!blob) {
-                throw new Error("Failed to generate image blob");
-            }
+            console.log(`Image generated successfully.`);
 
-            console.log(`Image generated successfully. Size: ${blob.size} bytes`);
-
-            // Create object URL for the blob
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
             const filename = `weekly-whats-on-${new Date().toISOString().split('T')[0]}.png`;
-            link.download = filename;
-            link.href = url;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
 
-            // Clean up
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+            // POST the base64 image to a server route that responds with
+            // Content-Disposition: attachment — the only reliable way to force
+            // a file download in Chrome without a direct user gesture on a blob URL
+            const response = await fetch('/api/download-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dataUrl, filename }),
+            });
+
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
         } catch (err) {
             console.error('Failed to generate image:', err);
@@ -200,6 +210,7 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
         } finally {
             setIsGenerating(false);
         }
+
     };
 
     const generateSocialText = () => {
@@ -218,9 +229,8 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
             <div className="flex-between mb-2">
                 <h1 style={{ color: 'var(--secondary)' }}>Site Command Centre</h1>
                 <div className="flex" style={{ gap: '1rem' }}>
-                    <Link href="/platform/venues" className="btn btn-secondary">
-                        Manage Venues
-                    </Link>
+                    <Link href="/platform/venues" className="btn btn-secondary">Manage Venues</Link>
+                    <Link href="/platform/media" className="btn btn-secondary">🖼 Media Library</Link>
                     <form action={platformLogout}>
                         <button className="btn btn-secondary">Logout</button>
                     </form>
@@ -424,6 +434,7 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
 
                     {/* Background Selector */}
                     <div className="grid mb-2" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                        {/* Built-in backgrounds */}
                         {BACKGROUNDS.map(bg => (
                             <div
                                 key={bg.id}
@@ -445,46 +456,39 @@ export default function PlatformDashboardClient({ events }: { events: EnrichedEv
                             </div>
                         ))}
 
-                        {/* Custom Upload Preview */}
-                        {customBgUrl && (
+                        {/* Saved DB backgrounds */}
+                        {dbBackgrounds.map(bg => (
                             <div
+                                key={bg.id}
                                 style={{
                                     aspectRatio: '1',
                                     borderRadius: '4px',
                                     overflow: 'hidden',
-                                    border: selectedBg.id === 'custom' ? '2px solid var(--primary)' : '1px solid #666',
+                                    border: selectedBg.id === `db-${bg.id}` ? '2px solid var(--primary)' : '1px solid #555',
                                     cursor: 'pointer',
                                     position: 'relative'
                                 }}
-                                onClick={() => setSelectedBg({ id: 'custom', name: 'Custom Upload', src: customBgUrl })}
-                                title="Custom Upload"
+                                onClick={() => setSelectedBg({ id: `db-${bg.id}`, name: bg.label || bg.filename, src: bg.url })}
+                                title={bg.label || bg.filename}
                             >
-                                <img src={customBgUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={bg.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 <div style={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    left: 0,
-                                    right: 0,
-                                    background: 'rgba(0,0,0,0.7)',
-                                    padding: '2px',
-                                    fontSize: '0.7rem',
-                                    textAlign: 'center'
-                                }}>Custom</div>
+                                    position: 'absolute', bottom: 0, left: 0, right: 0,
+                                    background: 'rgba(0,0,0,0.7)', padding: '2px',
+                                    fontSize: '0.6rem', textAlign: 'center',
+                                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                                }}>{bg.label || bg.filename}</div>
                             </div>
-                        )}
+                        ))}
                     </div>
 
-                    {/* Upload Button */}
+                    {/* Upload new background */}
                     <div className="mb-2">
-                        <label className="btn btn-secondary btn-sm" style={{ width: '100%', cursor: 'pointer', display: 'block', textAlign: 'center' }}>
-                            📁 Upload Custom Background
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleCustomImageUpload}
-                                style={{ display: 'none' }}
-                            />
-                        </label>
+                        <ImageUploader
+                            type="background"
+                            buttonText="📁 Upload & Save Background"
+                            onUploaded={handleBgUploaded}
+                        />
                     </div>
 
                     {/* The Image Canvas */}
