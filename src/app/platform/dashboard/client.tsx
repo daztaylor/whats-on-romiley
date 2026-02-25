@@ -245,9 +245,9 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                 </div>
             </div>
 
-            <div className="flex" style={{ gap: '2rem', alignItems: 'flex-start' }}>
+            <div className="flex" style={{ gap: '1rem', alignItems: 'flex-start' }}>
                 {/* Left: Event Selection */}
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 4, minWidth: 0 }}>
                     {/* Master Schedule */}
                     <div className="card">
                         <div className="flex-between mb-2">
@@ -382,7 +382,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                     </div>
                 </div>
                 {/* Right: Asset Generator Preview */}
-                <div style={{ flex: 1, position: 'sticky', top: '2rem' }}>
+                <div style={{ flex: 3, minWidth: 0, position: 'sticky', top: '2rem' }}>
                     <h2 className="mb-2">Asset Generator</h2>
 
                     {/* Background colour picker — only shown when Solid Color bg is selected */}
@@ -496,7 +496,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                             {selectedBg.src && (
                                 <img
                                     src={selectedBg.src}
-                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                             )}
 
@@ -534,16 +534,16 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                                             }}>
                                                 <div style={{
                                                     fontWeight: 'bold',
-                                                    color: '#ff006e',
-                                                    fontSize: '0.82rem',
+                                                    color: '#C1FF72',
+                                                    fontSize: '24px',
                                                     textTransform: 'uppercase',
                                                 }}>
                                                     {new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                 </div>
                                                 <div style={{
-                                                    fontSize: '0.8rem',
+                                                    fontSize: '24px',
                                                     fontWeight: 'bold',
-                                                    opacity: 0.9,
+                                                    color: '#C1FF72',
                                                 }}>
                                                     {new Date(e.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                                 </div>
@@ -551,7 +551,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
 
                                             {/* Col B — Venue */}
                                             <div style={{
-                                                fontSize: '0.65rem',
+                                                fontSize: '24px',
                                                 textTransform: 'uppercase',
                                                 letterSpacing: '0.5px',
                                                 opacity: 0.75,
@@ -562,7 +562,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                                             {/* Col E — Event Name */}
                                             <div style={{
                                                 fontWeight: '800',
-                                                fontSize: '1rem',
+                                                fontSize: '32px',
                                                 lineHeight: 1.15,
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
@@ -573,7 +573,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
 
                                             {/* Col F — Detail */}
                                             <div style={{
-                                                fontSize: '0.85rem',
+                                                fontSize: '24px',
                                                 opacity: 0.85,
                                                 marginTop: '0.1rem',
                                                 display: '-webkit-box',
