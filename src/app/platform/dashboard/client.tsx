@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useTransition } from 'react';
+import { useState, useRef, useEffect, useTransition } from 'react';
 import * as htmlToImage from 'html-to-image';
 import Link from 'next/link';
 import { platformLogout } from '@/app/actions/platform-auth';
@@ -55,8 +55,22 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
     const [bgColor, setBgColor] = useState("#000000"); // Default black
     const [footerText, setFooterText] = useState("DISCOVER MORE ONLINE");
     const exportRef = useRef<HTMLDivElement>(null);
+    const previewContainerRef = useRef<HTMLDivElement>(null);
+    const [previewScale, setPreviewScale] = useState(1);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Keep the canvas scaled to fit the preview panel
+    useEffect(() => {
+        const update = () => {
+            if (previewContainerRef.current) {
+                setPreviewScale(previewContainerRef.current.offsetWidth / 1080);
+            }
+        };
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
 
     // Filter State
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
@@ -157,23 +171,17 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
             // Wait a moment for any re-renders
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Calculate precise pixel ratio to match target width
-            const currentWidth = exportRef.current.offsetWidth;
-            const targetWidth = selectedAspectRatio.width;
-            const scale = targetWidth / currentWidth;
-
-            console.log(`Generating image. Current width: ${currentWidth}, Target: ${targetWidth}, Scale: ${scale}`);
-
-            // Generate as data URL (base64) — avoids blob URL new-tab issue
+            // Canvas is a fixed 1080x1350 — capture at 1:1 (pixelRatio:1 = exact 1080x1350 output)
             const dataUrl = await htmlToImage.toPng(exportRef.current, {
                 quality: 1.0,
-                pixelRatio: Math.max(scale, 2),
+                pixelRatio: 1,
                 cacheBust: true,
                 backgroundColor: selectedBg.id === 'solid' ? bgColor : '#000000',
-                width: currentWidth,
-                height: currentWidth / (selectedAspectRatio.width / selectedAspectRatio.height),
+                width: 1080,
+                height: 1350,
                 style: {
-                    transform: 'none'
+                    transform: 'none',       // override the preview scale
+                    transformOrigin: 'top left',
                 }
             });
 
@@ -377,60 +385,22 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                 <div style={{ flex: 1, position: 'sticky', top: '2rem' }}>
                     <h2 className="mb-2">Asset Generator</h2>
 
-                    {/* Aspect Ratio Selector */}
-                    <div className="mb-2">
-                        <label className="text-sm" style={{ display: 'block', marginBottom: '0.5rem' }}>Format</label>
-                        <select
-                            className="input w-full"
-                            value={selectedAspectRatio.id}
-                            onChange={(e) => {
-                                const ratio = ASPECT_RATIOS.find(r => r.id === e.target.value);
-                                if (ratio) setSelectedAspectRatio(ratio);
-                            }}
-                        >
-                            {ASPECT_RATIOS.map(ratio => (
-                                <option key={ratio.id} value={ratio.id}>
-                                    {ratio.name} - {ratio.width}x{ratio.height}px
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Custom Text Inputs */}
-                    <div className="flex flex-col mb-2" style={{ gap: '0.5rem' }}>
-                        <div className="flex" style={{ gap: '0.5rem' }}>
+                    {/* Background colour picker — only shown when Solid Color bg is selected */}
+                    {selectedBg.id === 'solid' && (
+                        <div className="flex mb-2" style={{ alignItems: 'center', gap: '0.5rem' }}>
+                            <label style={{ fontSize: '0.85rem' }}>Background Colour:</label>
                             <input
-                                type="text"
-                                className="input"
-                                value={titleText}
-                                onChange={e => setTitleText(e.target.value)}
-                                placeholder="Main Title"
-                                style={{ flex: 1 }}
+                                type="color"
+                                value={bgColor}
+                                onChange={e => {
+                                    setBgColor(e.target.value);
+                                    setSelectedBg({ id: 'solid', name: 'Solid Color', src: '' });
+                                }}
+                                style={{ height: '38px', width: '50px', padding: 0, border: 'none', background: 'none' }}
+                                title="Choose Background Color"
                             />
-                            {selectedBg.id === 'solid' && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <input
-                                        type="color"
-                                        value={bgColor}
-                                        onChange={e => {
-                                            setBgColor(e.target.value);
-                                            setSelectedBg({ id: 'solid', name: 'Solid Color', src: '' });
-                                        }}
-                                        style={{ height: '38px', width: '50px', padding: 0, border: 'none', background: 'none' }}
-                                        title="Choose Background Color"
-                                    />
-                                </div>
-                            )}
                         </div>
-                        <input
-                            type="text"
-                            className="input"
-                            value={footerText}
-                            onChange={e => setFooterText(e.target.value)}
-                            placeholder="Footer Text"
-                            style={{ width: '100%' }}
-                        />
-                    </div>
+                    )}
 
                     {/* Background Selector */}
                     <div className="grid mb-2" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
@@ -491,152 +461,132 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                         />
                     </div>
 
-                    {/* The Image Canvas */}
+                    {/* Preview wrapper — scales true 1080px canvas to fit the panel */}
                     <div
-                        ref={exportRef}
+                        ref={previewContainerRef}
                         style={{
                             width: '100%',
-                            aspectRatio: selectedAspectRatio.ratio,
-                            background: selectedBg.id === 'none' ? 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)' : (selectedBg.id === 'solid' ? bgColor : 'black'),
-                            padding: selectedAspectRatio.id === 'horizontal' ? '1rem' : '1.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            color: 'white',
-                            fontFamily: 'sans-serif',
+                            height: `${Math.round(1350 * previewScale)}px`,
                             position: 'relative',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
                         }}
                     >
-                        {selectedBg.src && (
-                            <img
-                                src={selectedBg.src}
-                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
-                            />
-                        )}
-
-                        <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <h2 style={{
-                                fontSize: '1.5rem',
-                                marginBottom: '0.5rem',
-                                textAlign: 'center',
-                                textTransform: 'uppercase',
-                                letterSpacing: '2px',
-                                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                                lineHeight: 1.1,
-                                flexShrink: 0
-                            }}>
-                                {titleText}
-                            </h2>
-
-                            <div style={{
-                                flex: 1,
-                                display: 'grid',
-                                gridTemplateColumns: selectedEvents.length === 1 ? '1fr' : '1fr 1fr',
-                                gridAutoRows: '1fr', // Force equal height rows
-                                alignContent: 'center',
-                                gap: selectedEvents.length > 6 ? '0.4rem' : '0.75rem',
+                        {/* The Image Canvas — true 1080×1350px, scaled visually for preview */}
+                        <div
+                            ref={exportRef}
+                            style={{
+                                width: '1080px',
+                                height: '1350px',
+                                transformOrigin: 'top left',
+                                transform: `scale(${previewScale})`,
+                                background: selectedBg.id === 'solid' ? bgColor : 'black',
+                                paddingTop: '306px',
+                                paddingBottom: '128px',
+                                paddingLeft: '12px',
+                                paddingRight: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                color: 'white',
+                                fontFamily: 'sans-serif',
+                                position: 'relative',
                                 overflow: 'hidden',
-                                width: '100%'
-                            }}>
-                                {selectedEvents.map((e, i) => {
-                                    // Dynamic font sizing based on count
-                                    const isCompact = selectedEvents.length > 6;
-                                    const isSingle = selectedEvents.length === 1;
+                                boxSizing: 'border-box',
+                            }}
+                        >
+                            {selectedBg.src && (
+                                <img
+                                    src={selectedBg.src}
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+                                />
+                            )}
 
-                                    return (
+                            <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                {/* 2-column grid — max 8 cards */}
+                                <div style={{
+                                    flex: 1,
+                                    display: 'grid',
+                                    gridTemplateColumns: '1fr 1fr',
+                                    gridAutoRows: '1fr',
+                                    gap: '0.5rem',
+                                    overflow: 'hidden',
+                                    width: '100%',
+                                }}>
+                                    {selectedEvents.slice(0, 8).map((e, i) => (
                                         <div key={i} style={{
-                                            background: 'rgba(0, 0, 0, 0.6)',
-                                            border: '1px solid rgba(255,255,255,0.15)',
+                                            background: 'rgba(30, 30, 30, 0.9)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
                                             borderRadius: '8px',
-                                            padding: isCompact ? '0.4rem' : '0.75rem',
+                                            padding: '0.6rem 0.75rem',
                                             display: 'flex',
                                             flexDirection: 'column',
-                                            gap: '0.1rem',
-                                            backdropFilter: 'blur(4px)',
-                                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-                                            minHeight: 0, // Allow shrinking
-                                            justifyContent: 'center'
+                                            gap: '0.15rem',
+                                            boxShadow: '0 4px 6px rgba(0,0,0,0.4)',
+                                            minHeight: 0,
                                         }}>
-                                            {/* Date & Time Row */}
+                                            {/* Col A (Date) + Col C (Start Time) */}
                                             <div style={{
                                                 display: 'flex',
                                                 justifyContent: 'space-between',
                                                 alignItems: 'baseline',
                                                 borderBottom: '1px solid rgba(255,255,255,0.2)',
                                                 paddingBottom: '0.2rem',
-                                                marginBottom: '0.2rem'
+                                                marginBottom: '0.15rem',
                                             }}>
                                                 <div style={{
                                                     fontWeight: 'bold',
                                                     color: '#ff006e',
-                                                    fontSize: isSingle ? '1.2rem' : (isCompact ? '0.75rem' : '0.9rem'),
-                                                    textTransform: 'uppercase'
+                                                    fontSize: '0.82rem',
+                                                    textTransform: 'uppercase',
                                                 }}>
                                                     {new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                 </div>
                                                 <div style={{
-                                                    fontSize: isSingle ? '1.1rem' : (isCompact ? '0.7rem' : '0.85rem'),
+                                                    fontSize: '0.8rem',
                                                     fontWeight: 'bold',
-                                                    opacity: 0.9
+                                                    opacity: 0.9,
                                                 }}>
                                                     {new Date(e.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
                                                 </div>
                                             </div>
 
-                                            {/* Venue */}
+                                            {/* Col B — Venue */}
                                             <div style={{
-                                                fontSize: isSingle ? '1rem' : (isCompact ? '0.6rem' : '0.7rem'),
+                                                fontSize: '0.65rem',
                                                 textTransform: 'uppercase',
-                                                letterSpacing: '1px',
-                                                opacity: 0.8,
-                                                marginBottom: '0.1rem'
+                                                letterSpacing: '0.5px',
+                                                opacity: 0.75,
                                             }}>
-                                                @{e.venue.name}
+                                                {e.venue.name}
                                             </div>
 
-                                            {/* Title */}
+                                            {/* Col E — Event Name */}
                                             <div style={{
                                                 fontWeight: '800',
-                                                fontSize: isSingle ? '1.8rem' : (isCompact ? '0.9rem' : '1.1rem'),
-                                                lineHeight: 1.1,
+                                                fontSize: '1rem',
+                                                lineHeight: 1.15,
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
-                                                marginBottom: 'auto' // Push description down
                                             }}>
                                                 {e.title}
                                             </div>
 
-                                            {/* Description (Truncated) */}
+                                            {/* Col F — Detail */}
                                             <div style={{
-                                                fontSize: isSingle ? '1.1rem' : (isCompact ? '0.65rem' : '0.8rem'),
-                                                opacity: 0.9,
-                                                marginTop: '0.2rem',
+                                                fontSize: '0.85rem',
+                                                opacity: 0.85,
+                                                marginTop: '0.1rem',
                                                 display: '-webkit-box',
-                                                WebkitLineClamp: isSingle ? 4 : (isCompact ? 2 : 3),
+                                                WebkitLineClamp: 2,
                                                 WebkitBoxOrient: 'vertical',
                                                 overflow: 'hidden',
-                                                lineHeight: 1.3
+                                                lineHeight: 1.35,
                                             }}>
                                                 {e.description}
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-
-                            <div style={{
-                                marginTop: '0.5rem',
-                                fontSize: '0.7rem',
-                                opacity: 0.8,
-                                letterSpacing: '2px',
-                                textAlign: 'center',
-                                textShadow: '0 1px 2px black',
-                                flexShrink: 0
-                            }}>
-                                {footerText}
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

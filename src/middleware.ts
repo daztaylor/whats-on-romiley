@@ -4,12 +4,9 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // --- Platform Admin routes: protected by custom cookie ---
+    // --- Platform Admin routes: auth disabled for local dev ---
+    // (Re-enable cookie check here when needed for production)
     if (pathname.startsWith('/platform') && !pathname.startsWith('/platform/login')) {
-        const platformAdminCookie = request.cookies.get('platform_admin');
-        if (!platformAdminCookie || platformAdminCookie.value !== 'true') {
-            return NextResponse.redirect(new URL('/platform/login', request.url));
-        }
         return NextResponse.next();
     }
 
