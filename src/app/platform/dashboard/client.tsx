@@ -149,11 +149,16 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
 
             setIsDeleting(true);
             try {
-                await deleteEvents(Array.from(selectedIds));
-                setSelectedIds(new Set());
-                setTimeout(() => {
-                    window.location.reload();
-                }, 100);
+                const result = await deleteEvents(Array.from(selectedIds));
+                if (result?.error) {
+                    alert(`Error: ${result.error}`);
+                    setIsDeleting(false);
+                } else {
+                    setSelectedIds(new Set());
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100);
+                }
             } catch (e) {
                 alert('Failed to delete');
                 setIsDeleting(false);
@@ -364,8 +369,12 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                                                         setTimeout(async () => {
                                                             const confirmed = confirm('Delete this event? This cannot be undone.');
                                                             if (confirmed) {
-                                                                await deleteEvents([event.id]);
-                                                                window.location.reload();
+                                                                const result = await deleteEvents([event.id]);
+                                                                if (result?.error) {
+                                                                    alert(`Error: ${result.error}`);
+                                                                } else {
+                                                                    window.location.reload();
+                                                                }
                                                             }
                                                         }, 0);
                                                     }}

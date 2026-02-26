@@ -4,20 +4,24 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // --- Platform Admin routes: auth disabled for local dev ---
-    // (Re-enable cookie check here when needed for production)
-    if (pathname.startsWith('/platform') && !pathname.startsWith('/platform/login')) {
+    // --- Platform Admin routes ---
+    if (pathname.startsWith('/platform')) {
         return NextResponse.next();
     }
 
-    // --- Venue Admin routes: protected by NextAuth session cookie ---
-    // We check for the NextAuth session cookie directly to avoid importing
-    // the full NextAuth library (which exceeds the 1MB Edge Function limit).
+    // --- Venue Admin routes ---
     if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+        // Skip auth check in local development
+        if (process.env.NODE_ENV === 'development') {
+            return NextResponse.next();
+        }
+
         const sessionCookie =
             request.cookies.get('__Secure-next-auth.session-token') ||
             request.cookies.get('next-auth.session-token');
-        if (!sessionCookie) {
+        const platformAdminCookie = request.cookies.get('platform_admin');
+
+        if (!sessionCookie && !platformAdminCookie) {
             return NextResponse.redirect(new URL('/admin/login', request.url));
         }
         return NextResponse.next();

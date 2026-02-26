@@ -10,10 +10,11 @@ interface Props {
         description: string;
         date: Date;
         category: string;
-    }
+    },
+    isPlatformAdmin?: boolean;
 }
 
-export default function EditEventForm({ event }: Props) {
+export default function EditEventForm({ event, isPlatformAdmin }: Props) {
     const [isPending, startTransition] = useTransition()
     const [state, setState] = useState<any>(null)
 
@@ -73,7 +74,7 @@ export default function EditEventForm({ event }: Props) {
                 )}
 
                 <div className="flex" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
-                    <a href="/admin/dashboard" className="btn btn-secondary" style={{ marginRight: '1rem' }}>Cancel</a>
+                    <a href={isPlatformAdmin ? "/platform/dashboard" : "/admin/dashboard"} className="btn btn-secondary" style={{ marginRight: '1rem' }}>Cancel</a>
                     <button type="submit" disabled={isPending} className="btn">
                         {isPending ? 'Saving...' : 'Update Event'}
                     </button>
