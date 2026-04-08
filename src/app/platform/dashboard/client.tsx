@@ -233,7 +233,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
             const day = new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'Europe/London' });
             text += `🗓 ${day}: ${e.title} @ ${e.venue.name}\n`;
         });
-        text += "\n📲 Check the What's On in Romiley app for full details! #Romiley #WhatsOn";
+        text += "\nMake sure to Follow us on Facebook";
         return text;
     };
 
