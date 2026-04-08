@@ -614,7 +614,8 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                         <textarea
                             readOnly
                             className="input mt-2"
-                            style={{ width: '100%', height: '150px' }}
+                            rows={10}
+                            style={{ width: '100%', resize: 'vertical' }}
                             value={generateSocialText()}
                         />
 
