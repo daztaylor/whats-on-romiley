@@ -132,7 +132,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
     for (let i = 0; i < 12; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
         const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'Europe/London' });
         monthOptions.push({ value, label });
     }
 
@@ -230,7 +230,7 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
         if (selectedEvents.length === 0) return '';
         let text = `🎉 ${titleText} 🎉\n\n`;
         selectedEvents.forEach(e => {
-            const day = new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+            const day = new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', timeZone: 'Europe/London' });
             text += `🗓 ${day}: ${e.title} @ ${e.venue.name}\n`;
         });
         text += "\n📲 Check the What's On in Romiley app for full details! #Romiley #WhatsOn";
@@ -356,7 +356,8 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                                                 month: 'short',
                                                 year: 'numeric',
                                                 hour: '2-digit',
-                                                minute: '2-digit'
+                                                minute: '2-digit',
+                                                timeZone: 'Europe/London'
                                             })}
                                         </td>
                                         <td style={{ padding: '0.5rem' }}>
@@ -547,14 +548,14 @@ export default function PlatformDashboardClient({ events, savedBackgrounds }: { 
                                                     fontSize: '24px',
                                                     textTransform: 'uppercase',
                                                 }}>
-                                                    {new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                    {new Date(e.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London' })}
                                                 </div>
                                                 <div style={{
                                                     fontSize: '24px',
                                                     fontWeight: 'bold',
                                                     color: '#C1FF72',
                                                 }}>
-                                                    {new Date(e.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                    {new Date(e.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/London' })}
                                                 </div>
                                             </div>
 

@@ -34,8 +34,8 @@ export default async function EventDetailPage({
                 <div className="flex-between">
                     <span className="tag" style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>{event.category}</span>
                     <span style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>
-                        {new Date(event.date).toLocaleDateString(undefined, {
-                            weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        {new Date(event.date).toLocaleDateString('en-GB', {
+                            weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London'
                         })}
                     </span>
                 </div>

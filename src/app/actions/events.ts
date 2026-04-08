@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { addWeeks, addMonths } from 'date-fns'
+import { fromZonedTime } from 'date-fns-tz'
 
 export async function createEvent(prevState: any, formData: FormData) {
     const cookieStore = await cookies()
@@ -25,7 +26,7 @@ export async function createEvent(prevState: any, formData: FormData) {
         return { error: 'Missing Required Fields' }
     }
 
-    const startDate = new Date(dateStr)
+    const startDate = fromZonedTime(dateStr, 'Europe/London')
     const groupId = crypto.randomUUID()
 
     // Base event data
@@ -116,7 +117,7 @@ export async function updateEvent(id: string, prevState: any, formData: FormData
             title,
             description,
             category,
-            date: new Date(dateStr),
+            date: fromZonedTime(dateStr, 'Europe/London'),
             bookingUrl: bookingUrl || null
         }
     })

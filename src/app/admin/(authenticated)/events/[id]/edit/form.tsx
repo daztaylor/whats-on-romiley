@@ -27,8 +27,25 @@ export default function EditEventForm({ event, isPlatformAdmin }: Props) {
         })
     }
 
-    // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
-    const defaultDate = new Date(event.date).toISOString().slice(0, 16);
+    // Format date for datetime-local input (YYYY-MM-DDTHH:mm) in Europe/London timezone
+    const eventDate = new Date(event.date);
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/London',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).formatToParts(eventDate);
+
+    const yr = parts.find(p => p.type === 'year')?.value;
+    const mo = parts.find(p => p.type === 'month')?.value;
+    const da = parts.find(p => p.type === 'day')?.value;
+    const hr = parts.find(p => p.type === 'hour')?.value;
+    const mi = parts.find(p => p.type === 'minute')?.value;
+
+    const defaultDate = `${yr}-${mo}-${da}T${hr}:${mi}`;
 
     return (
         <div className="card">

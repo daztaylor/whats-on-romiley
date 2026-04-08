@@ -31,15 +31,17 @@ export default function SocialMediaClient({ event }: Props) {
     const exportRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const dateStr = new Date(event.date).toLocaleDateString(undefined, {
+    const dateStr = new Date(event.date).toLocaleDateString('en-GB', {
         weekday: 'long',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: 'Europe/London'
     });
 
-    const timeStr = new Date(event.date).toLocaleTimeString(undefined, {
+    const timeStr = new Date(event.date).toLocaleTimeString('en-GB', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Europe/London'
     });
 
     const twitterText = `Join us at ${event.venue.name} in Romiley for ${event.title}! 🍻\n\n📅 ${dateStr} at ${timeStr}\n📍 ${event.venue.location}\n\n#${event.category.replace(/\s/g, '')} #RomileyEvents`;

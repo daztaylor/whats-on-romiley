@@ -113,7 +113,7 @@ export default function DashboardClient({ events }: { events: Event[] }) {
                                     />
                                 </td>
                                 <td style={{ padding: '1rem' }} suppressHydrationWarning>
-                                    {new Date(event.date).toLocaleDateString()}
+                                    {new Date(event.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Europe/London' })}
                                 </td>
                                 <td style={{ padding: '1rem', fontWeight: 'bold' }}>{event.title}</td>
                                 <td style={{ padding: '1rem' }}><span className="tag">{event.category}</span></td>

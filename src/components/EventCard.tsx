@@ -16,9 +16,9 @@ interface EventCardProps {
 
 export default function EventCard({ event }: EventCardProps) {
     const dateObj = new Date(event.date);
-    const dayStr = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
-    const dateNum = dateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const dayStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'Europe/London' });
+    const dateNum = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/London' });
+    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/London' });
 
     return (
         <Link href={`/events/${event.id}`} className="card" style={{ textDecoration: 'none', position: 'relative', overflow: 'hidden' }}>

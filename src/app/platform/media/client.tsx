@@ -162,7 +162,7 @@ export default function MediaLibraryClient({ initialMedia }: { initialMedia: Med
                                             {TYPE_LABELS[m.type] || m.type} · {formatBytes(m.size)}
                                         </div>
                                         <div style={{ fontSize: '0.65rem', opacity: 0.5 }}>
-                                            {new Date(m.createdAt).toLocaleDateString('en-GB')}
+                                            {new Date(m.createdAt).toLocaleDateString('en-GB', { timeZone: 'Europe/London' })}
                                         </div>
                                     </div>
 

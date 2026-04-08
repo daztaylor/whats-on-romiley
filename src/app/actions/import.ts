@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { fromZonedTime } from 'date-fns-tz'
 
 function generateSlug(name: string) {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -17,10 +18,12 @@ function parseStrictDate(dateStr: string, timeStr: string) {
             return null;
         }
 
-        const date = new Date(year, month - 1, day, hours, minutes);
-        if (isNaN(date.getTime())) return null;
+        const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+        const zonedDate = fromZonedTime(dateString, 'Europe/London');
+        
+        if (isNaN(zonedDate.getTime())) return null;
 
-        return date;
+        return zonedDate;
     } catch (e) {
         return null;
     }
